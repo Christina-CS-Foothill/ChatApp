@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import '../../widgets/pickers/user_image_picker.dart';
 import 'package:flutter/material.dart';
 
 class AuthForm extends StatefulWidget {
@@ -7,6 +10,7 @@ class AuthForm extends StatefulWidget {
     String userName,
     bool isLogin,
     BuildContext context,
+    File image,
   ) submitFn;
   final bool isLoading;
 
@@ -22,10 +26,24 @@ class _AuthFormState extends State<AuthForm> {
   var _userEmail = '';
   var _userName = '';
   var _userPassword = '';
+  File? _userImageFile = null;
+
+  void _pickedImage(File image) {
+    _userImageFile = image;
+  }
 
   void _trySubmit() {
     final isValid = _formKey.currentState!.validate();
     FocusScope.of(context).unfocus();
+
+    //only care about image in sign up mode
+    if (_userImageFile == null && !_isLogin) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: const Text('Please pick an image.'),
+        backgroundColor: Theme.of(context).errorColor,
+      ));
+      return;
+    }
     if (isValid) {
       _formKey.currentState!.save();
       print(_userEmail);
@@ -38,6 +56,7 @@ class _AuthFormState extends State<AuthForm> {
         _userName,
         _isLogin,
         context,
+        _userImageFile as File,
       );
     }
   }
@@ -57,6 +76,7 @@ class _AuthFormState extends State<AuthForm> {
                 //as much size as needed(instead of all available size)
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
+                  if (!_isLogin) UserImagePicker(imagePickFn: _pickedImage),
                   TextFormField(
                     key: ValueKey('Email'),
                     validator: (value) {
